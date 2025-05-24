@@ -27,14 +27,15 @@ mybatis-plus:
       logic-delete-value: 1        # 逻辑已删除值
       logic-not-delete-value: 0    # 逻辑未删除值
 
+# http://localhost:8082/api/doc.html
+# http://localhost:8082/api/v2/api-docs
 knife4j:
   enable: true
   openapi:
     title: 接口文档
     version: 1.0
     group:
-      test1:
-        group-name: 分组名称
+      default:
         api-rule: package
         api-rule-resources:
           - com.fetters.picture.controller

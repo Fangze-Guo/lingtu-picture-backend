@@ -1,11 +1,15 @@
 package com.fetters.picture.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.fetters.picture.model.dto.user.UserQueryRequest;
 import com.fetters.picture.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fetters.picture.model.vo.LoginUserVO;
+import com.fetters.picture.model.vo.UserVO;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.http.HttpRequest;
+import java.util.List;
 
 /**
 * @author Fetters
@@ -58,4 +62,25 @@ public interface UserService extends IService<User> {
      * @return
      */
     boolean userLogout(HttpServletRequest request);
+
+    /**
+     * 获取脱敏后的用户信息
+     * @param user 用户信息
+     * @return 脱敏后的用户信息
+     */
+    UserVO getUserVO(User user);
+
+    /**
+     * 获取脱敏后的用户列表
+     * @param userList 用户列表
+     * @return 脱敏后的用户列表
+     */
+    List<UserVO> getUserVOList(List<User> userList);
+
+    /**
+     * 获取处理后的查询条件
+     * @param userQueryRequest 用户查询条件
+     * @return 封装后的查询条件（分页）
+     */
+    QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 }

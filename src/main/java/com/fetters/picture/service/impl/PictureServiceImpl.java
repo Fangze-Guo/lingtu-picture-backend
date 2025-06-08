@@ -10,7 +10,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fetters.picture.exception.BusinessException;
 import com.fetters.picture.exception.ErrorCode;
 import com.fetters.picture.exception.ThrowUtils;
-import com.fetters.picture.manager.FileManager;
+import com.fetters.picture.manager.upload.FilePictureUpload;
+import com.fetters.picture.manager.upload.PictureUploadTemplate;
+import com.fetters.picture.manager.upload.UrlPictureUpload;
 import com.fetters.picture.mapper.PictureMapper;
 import com.fetters.picture.model.dto.file.UploadPictureResult;
 import com.fetters.picture.model.dto.picture.PictureQueryRequest;
@@ -24,7 +26,6 @@ import com.fetters.picture.model.vo.UserVO;
 import com.fetters.picture.service.PictureService;
 import com.fetters.picture.service.UserService;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -44,24 +45,23 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         implements PictureService {
 
     @Resource
-    private FileManager fileManager;
+    private UserService userService;
 
     @Resource
-    private UserService userService;
+    private FilePictureUpload filePictureUpload;
+
+    @Resource
+    private UrlPictureUpload urlPictureUpload;
 
     /**
      * 上传图片方法
-     * @param multipartFile        图片文件，用于获取图片数据
+     * @param inputSource          输入源（本地文件或 URL）
      * @param pictureUploadRequest 图片上传请求对象，包含图片ID，用于判断是新增还是更新图片
      * @param loginUser            登录用户信息，用于验证用户权限和确定图片归属
      * @return 返回上传后的图片信息对象
-     * <p>
-     * 该方法首先验证用户是否有权限进行操作，然后根据请求中的图片ID判断是新增还是更新图片
-     * 如果是更新操作，会检查图片是否存在如果存在，则更新图片信息；否则，创建新的图片信息
-     * 最后，将图片信息保存或更新到数据库中，并返回上传后的图片信息
      */
     @Override
-    public PictureVO uploadPicture(MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, User loginUser) {
+    public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser) {
         // 检查用户是否已登录，如果没有登录，则抛出无权限错误
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_AUTH_ERROR);
 
@@ -84,8 +84,13 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
         // 按照用户 id 划分目录
         String uploadPathPrefix = String.format("public/%s", loginUser.getId());
-        // 上传图片，得到信息
-        UploadPictureResult uploadPictureResult = fileManager.uploadFile(multipartFile, uploadPathPrefix);
+
+        // 根据 inputSource 类型区分上传方式
+        PictureUploadTemplate pictureUploadTemplate = filePictureUpload;
+        if (inputSource instanceof String) {
+            pictureUploadTemplate = urlPictureUpload;
+        }
+        UploadPictureResult uploadPictureResult = pictureUploadTemplate.uploadPicture(inputSource, uploadPathPrefix);
 
         // 构造要入库的图片信息
         Picture picture = new Picture();
@@ -178,9 +183,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     /**
      * 获取图片封装类
-     * @param picture
-     * @param request
-     * @return
+     * @param picture 图片
+     * @param request 请求
+     * @return 图片封装类
      */
     @Override
     public PictureVO getPictureVO(Picture picture, HttpServletRequest request) {
@@ -198,8 +203,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     /**
      * 分页获取图片封装
-     * @param picturePage
-     * @param request
+     * @param picturePage 图片分页
+     * @param request     请求
+     * @return 图片封装分页
      */
     @Override
     public Page<PictureVO> getPictureVOPage(Page<Picture> picturePage, HttpServletRequest request) {
@@ -229,7 +235,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     /**
      * 校验图片
-     * @param picture
+     * @param picture 图片
      */
     @Override
     public void validPicture(Picture picture) {

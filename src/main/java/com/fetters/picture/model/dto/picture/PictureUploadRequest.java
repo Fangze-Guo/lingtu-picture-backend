@@ -16,5 +16,10 @@ public class PictureUploadRequest implements Serializable {
      */
     private Long id;
 
+    /**
+     * 文件地址
+     */
+    private String fileUrl;
+
     private static final long serialVersionUID = 1L;
 }

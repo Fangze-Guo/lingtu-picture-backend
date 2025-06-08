@@ -9,7 +9,6 @@ import com.fetters.picture.model.dto.picture.PictureUploadRequest;
 import com.fetters.picture.model.entity.Picture;
 import com.fetters.picture.model.entity.User;
 import com.fetters.picture.model.vo.PictureVO;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -20,13 +19,13 @@ import javax.servlet.http.HttpServletRequest;
  */
 public interface PictureService extends IService<Picture> {
     /**
-     * 上传图片
-     * @param multipartFile
-     * @param pictureUploadRequest
-     * @param loginUser
-     * @return
+     * 上传图片方法
+     * @param inputSource          输入源（本地文件或 URL）
+     * @param pictureUploadRequest 图片上传请求对象，包含图片ID，用于判断是新增还是更新图片
+     * @param loginUser            登录用户信息，用于验证用户权限和确定图片归属
+     * @return 返回上传后的图片信息对象
      */
-    PictureVO uploadPicture(MultipartFile multipartFile,
+    PictureVO uploadPicture(Object inputSource,
                             PictureUploadRequest pictureUploadRequest,
                             User loginUser);
 
@@ -39,23 +38,23 @@ public interface PictureService extends IService<Picture> {
 
     /**
      * 获取图片封装类
-     * @param picture
-     * @param request
-     * @return
+     * @param picture 图片
+     * @param request 请求
+     * @return 图片封装类
      */
     PictureVO getPictureVO(Picture picture, HttpServletRequest request);
 
     /**
      * 分页获取图片封装
-     * @param picturePage
-     * @param request
-     * @return
+     * @param picturePage 图片分页
+     * @param request     请求
+     * @return 图片封装分页
      */
     Page<PictureVO> getPictureVOPage(Page<Picture> picturePage, HttpServletRequest request);
 
     /**
      * 校验图片
-     * @param picture
+     * @param picture 图片
      */
     void validPicture(Picture picture);
 

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fetters.picture.model.dto.picture.PictureQueryRequest;
 import com.fetters.picture.model.dto.picture.PictureReviewRequest;
+import com.fetters.picture.model.dto.picture.PictureUploadByBatchRequest;
 import com.fetters.picture.model.dto.picture.PictureUploadRequest;
 import com.fetters.picture.model.entity.Picture;
 import com.fetters.picture.model.entity.User;
@@ -71,4 +72,12 @@ public interface PictureService extends IService<Picture> {
      * @param loginUser 登录用户
      */
     void fillReviewParams(Picture picture, User loginUser);
+
+    /**
+     * 批量上传图片
+     * @param pictureUploadByBatchRequest 图片上传批量请求
+     * @param loginUser                   登录用户
+     * @return 批量上传图片数量
+     */
+    Integer uploadPictureByBatch(PictureUploadByBatchRequest pictureUploadByBatchRequest, User loginUser);
 }

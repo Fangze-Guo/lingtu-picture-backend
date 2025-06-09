@@ -6,26 +6,30 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 图片上传请求
- * @author Fetters
+ * 批量上传图片请求
  */
 @Data
-public class PictureUploadRequest implements Serializable {
+public class PictureUploadByBatchRequest implements Serializable {
 
     /**
-     * 图片 id（用于修改）
+     * 搜索词
      */
-    private Long id;
+    private String searchText;
 
     /**
-     * 文件地址（用于 URL 上传）
+     * 起始索引
      */
-    private String fileUrl;
+    private Integer firstIndex = 0;
 
     /**
-     * 图片名称
+     * 抓取数量
      */
-    private String picName;
+    private Integer count = 10;
+
+    /**
+     * 图片名称前缀
+     */
+    private String namePrefix;
 
     /**
      * 分类

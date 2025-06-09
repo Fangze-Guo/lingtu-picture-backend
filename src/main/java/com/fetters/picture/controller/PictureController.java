@@ -226,10 +226,10 @@ public class PictureController {
     @GetMapping("/tag_category")
     public BaseResponse<PictureTagCategory> listPictureTagCategory() {
         PictureTagCategory pictureTagCategory = new PictureTagCategory();
-        List<String> tagList = Arrays.asList("热门", "搞笑", "生活", "高清", "艺术", "校园", "背景", "简历", "创意");
-        List<String> categoryList = Arrays.asList("模板", "电商", "表情包", "素材", "海报");
-        pictureTagCategory.setTagList(tagList);
+        List<String> categoryList = Arrays.asList("壁纸", "插画", "摄影", "图片", "头像");
+        List<String> tagList = Arrays.asList("自然", "城市", "人物", "动物", "美食", "动漫", "生活", "游戏");
         pictureTagCategory.setCategoryList(categoryList);
+        pictureTagCategory.setTagList(tagList);
         return ResultUtils.success(pictureTagCategory);
     }
 
@@ -246,5 +246,18 @@ public class PictureController {
         User loginUser = userService.getLoginUser(request);
         pictureService.doPictureReview(pictureReviewRequest, loginUser);
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 批量抓取并上传图片
+     */
+    @PostMapping("/upload/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Integer> uploadPictureByBatch(@RequestBody PictureUploadByBatchRequest pictureUploadByBatchRequest,
+                                                      HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureUploadByBatchRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        int uploadCount = pictureService.uploadPictureByBatch(pictureUploadByBatchRequest, loginUser);
+        return ResultUtils.success(uploadCount);
     }
 }

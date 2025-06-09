@@ -29,9 +29,6 @@ public class UrlPictureUpload extends PictureUploadTemplate {
     protected void validPicture(Object inputSource) {
         String fileUrl = (String) inputSource;
         ThrowUtils.throwIf(StrUtil.isBlank(fileUrl), ErrorCode.PARAMS_ERROR, "文件地址不能为空");
-        System.out.println("原始URL: [" + fileUrl + "]");
-        System.out.println("去除空白后: [" + fileUrl.trim() + "]");
-
         try {
             // 1. 验证 URL 格式
             new URL(fileUrl); // 验证是否是合法的 URL

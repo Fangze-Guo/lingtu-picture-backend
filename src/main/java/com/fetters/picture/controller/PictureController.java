@@ -23,6 +23,8 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.util.DigestUtils;
@@ -109,9 +111,27 @@ public class PictureController {
         if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
+
+        // 清理COS存储
+        pictureService.clearPictureFile(oldPicture);
+
         // 操作数据库
         boolean result = pictureService.removeById(id);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+
+        // 清理本地缓存（如果有命中）
+        String cacheKeyPattern = "picture:listPictureVOByPage:*";
+        LOCAL_CACHE.asMap().keySet().stream()
+                .filter(key -> key.startsWith("picture:listPictureVOByPage:"))
+                .forEach(LOCAL_CACHE::invalidate);
+
+        // 清理 Redis 缓存（使用 SCAN 避免阻塞）
+        ScanOptions options = ScanOptions.scanOptions().match(cacheKeyPattern).build();
+        Cursor<byte[]> cursor = stringRedisTemplate.getConnectionFactory().getConnection().scan(options);
+        while (cursor.hasNext()) {
+            byte[] keyBytes = cursor.next();
+            stringRedisTemplate.delete(new String(keyBytes));
+        }
         return ResultUtils.success(true);
     }
 

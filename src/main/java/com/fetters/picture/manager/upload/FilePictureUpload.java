@@ -7,40 +7,39 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * @author : Fetters
- * @description : 本地文件图片上传
- * @createDate : 2025/6/8 11:25
+ * 文件图片上传
  */
 @Service
 public class FilePictureUpload extends PictureUploadTemplate {
+
     @Override
     protected void validPicture(Object inputSource) {
         MultipartFile multipartFile = (MultipartFile) inputSource;
-        ThrowUtils.throwIf(multipartFile.isEmpty(), ErrorCode.PARAMS_ERROR, "文件不能为空");
-        // 1.校验文件大小
+        ThrowUtils.throwIf(multipartFile == null, ErrorCode.PARAMS_ERROR, "文件不能为空");
+        // 1. 校验文件大小
         long fileSize = multipartFile.getSize();
-        ThrowUtils.throwIf(fileSize > 1024 * 1024 * 20, ErrorCode.PARAMS_ERROR, "文件大小不能超过 20MB");
-        // 2.校验文件类型
+        final long ONE_M = 1024 * 1024;
+        ThrowUtils.throwIf(fileSize > 20 * ONE_M, ErrorCode.PARAMS_ERROR, "文件大小不能超过 20MB");
+        // 2. 校验文件后缀
         String fileSuffix = FileUtil.getSuffix(multipartFile.getOriginalFilename());
-        final List<String> ALLOW_FORMAT_LIST = Arrays.asList("jpg", "jpeg", "png", "gif");
-        ThrowUtils.throwIf(!ALLOW_FORMAT_LIST.contains(fileSuffix), ErrorCode.PARAMS_ERROR, "不支持的文件格式");
+        // 允许上传的文件后缀列表（或者集合）
+        final List<String> ALLOW_FORMAT_LIST = Arrays.asList("jpeg", "png", "jpg", "webp");
+        ThrowUtils.throwIf(!ALLOW_FORMAT_LIST.contains(fileSuffix), ErrorCode.PARAMS_ERROR, "文件类型错误");
     }
 
     @Override
-    protected String getOriginalFilename(Object inputSource) {
+    protected String getOriginFilename(Object inputSource) {
         MultipartFile multipartFile = (MultipartFile) inputSource;
         return multipartFile.getOriginalFilename();
     }
 
     @Override
-    protected void processFile(Object inputSource, File file) throws IOException {
+    protected void processFile(Object inputSource, File file) throws Exception {
         MultipartFile multipartFile = (MultipartFile) inputSource;
         multipartFile.transferTo(file);
     }
 }
-

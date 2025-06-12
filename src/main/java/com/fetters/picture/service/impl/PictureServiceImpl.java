@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fetters.picture.exception.BusinessException;
 import com.fetters.picture.exception.ErrorCode;
 import com.fetters.picture.exception.ThrowUtils;
+import com.fetters.picture.manager.CosManager;
 import com.fetters.picture.manager.upload.FilePictureUpload;
 import com.fetters.picture.manager.upload.PictureUploadTemplate;
 import com.fetters.picture.manager.upload.UrlPictureUpload;
@@ -32,6 +33,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -62,6 +65,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     @Resource
     private UrlPictureUpload urlPictureUpload;
 
+    @Resource
+    private CosManager cosManager;
+
     /**
      * 上传图片方法
      * @param inputSource          输入源（本地文件或 URL）
@@ -89,6 +95,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
             }
+            // 清理旧图COS存储
+            this.clearPictureFile(oldPicture);
         }
 
         // 按照用户 id 划分目录
@@ -104,6 +112,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 构造要入库的图片信息
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());
+        picture.setThumbnailUrl(uploadPictureResult.getThumbnailUrl());
+        picture.setDownloadUrl(uploadPictureResult.getDownloadUrl());
         String picName = uploadPictureResult.getPicName();
         // 支持外层传递图片名称，用于图片名称的覆盖
         if (pictureUploadRequest != null && StrUtil.isNotBlank(pictureUploadRequest.getPicName())) {
@@ -390,5 +400,32 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             if (uploadCount >= count) break;
         }
         return uploadCount;
+    }
+
+    /**
+     * 清理图片文件
+     * @param oldPicture 旧图片
+     */
+    @Async
+    @Override
+    public void clearPictureFile(Picture oldPicture) {
+        // 判断图片是否被多条记录使用
+        String pictureUrl = oldPicture.getUrl();
+        Long count = this.lambdaQuery().eq(Picture::getUrl, pictureUrl).count();
+        if (count > 1) return;
+        // 删除压缩图
+        cosManager.deleteObject(pictureUrl);
+
+        // 删除缩略图
+        String thumbnailUrl = oldPicture.getThumbnailUrl();
+        if (StrUtil.isNotBlank(thumbnailUrl)) {
+            cosManager.deleteObject(thumbnailUrl);
+        }
+
+        // 删除原图
+        String downloadUrl = oldPicture.getDownloadUrl();
+        if (StrUtil.isNotBlank(downloadUrl)) {
+            cosManager.deleteObject(downloadUrl);
+        }
     }
 }

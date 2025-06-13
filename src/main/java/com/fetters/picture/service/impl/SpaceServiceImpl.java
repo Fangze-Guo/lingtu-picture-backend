@@ -10,6 +10,7 @@ import com.fetters.picture.exception.BusinessException;
 import com.fetters.picture.exception.ErrorCode;
 import com.fetters.picture.exception.ThrowUtils;
 import com.fetters.picture.mapper.SpaceMapper;
+import com.fetters.picture.model.dto.space.SpaceAddRequest;
 import com.fetters.picture.model.dto.space.SpaceQueryRequest;
 import com.fetters.picture.model.entity.Space;
 import com.fetters.picture.model.entity.User;
@@ -18,13 +19,16 @@ import com.fetters.picture.model.vo.SpaceVO;
 import com.fetters.picture.model.vo.UserVO;
 import com.fetters.picture.service.SpaceService;
 import com.fetters.picture.service.UserService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -38,6 +42,54 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private TransactionTemplate transactionTemplate;
+
+    Map<Long, Object> userLockMap = new ConcurrentHashMap<>();
+
+    @Override
+    public long addSpace(SpaceAddRequest spaceAddRequest, User loginUser) {
+        Space space = new Space();
+        BeanUtils.copyProperties(spaceAddRequest, space);
+        // 填充参数默认值
+        if (StrUtil.isBlank(spaceAddRequest.getSpaceName())) {
+            space.setSpaceName("默认空间");
+        }
+        if (spaceAddRequest.getSpaceLevel() == null) {
+            space.setSpaceLevel(SpaceLevelEnum.COMMON.getValue());
+        }
+        // 根据空间级别填充容量和大小
+        this.fillSpaceBySpaceLevel(space);
+
+        // 校验空间对象参数
+        this.validSpace(space, true);
+
+        // 校验权限，非管理员只能创建普通级别空间
+        Long userId = loginUser.getId();
+        space.setUserId(userId);
+        if (SpaceLevelEnum.COMMON.getValue() != space.getSpaceLevel() && !userService.isAdmin(loginUser)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限创建指定级别的空间");
+        }
+
+        // 控制同一用户只能创建一个私有空间
+        Object lock = userLockMap.computeIfAbsent(userId, key -> new Object());
+        synchronized (lock) {
+            Long newSpaceId = transactionTemplate.execute(status -> {
+                // 判断是否已有空间
+                boolean exists = this.lambdaQuery().eq(Space::getUserId, userId).exists();
+                if (exists) {
+                    throw new BusinessException(ErrorCode.OPERATION_ERROR, "每个用户仅能有一个私有空间");
+                }
+                boolean save = this.save(space);
+                if (!save) {
+                    throw new BusinessException(ErrorCode.OPERATION_ERROR, "创建空间失败");
+                }
+                return space.getId();
+            });
+            return newSpaceId;
+        }
+    }
 
     @Override
     public QueryWrapper<Space> getQueryWrapper(SpaceQueryRequest spaceQueryRequest) {

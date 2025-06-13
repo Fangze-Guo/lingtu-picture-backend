@@ -1,7 +1,5 @@
 package com.fetters.picture.controller;
 
-import cn.hutool.core.util.RandomUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fetters.picture.annotation.AuthCheck;
 import com.fetters.picture.common.BaseResponse;
@@ -11,6 +9,7 @@ import com.fetters.picture.constant.UserConstant;
 import com.fetters.picture.exception.BusinessException;
 import com.fetters.picture.exception.ErrorCode;
 import com.fetters.picture.exception.ThrowUtils;
+import com.fetters.picture.model.dto.space.SpaceAddRequest;
 import com.fetters.picture.model.dto.space.SpaceEditRequest;
 import com.fetters.picture.model.dto.space.SpaceQueryRequest;
 import com.fetters.picture.model.dto.space.SpaceUpdateRequest;
@@ -21,16 +20,11 @@ import com.fetters.picture.service.SpaceService;
 import com.fetters.picture.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.redis.core.Cursor;
-import org.springframework.data.redis.core.ScanOptions;
-import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author : Fetters
@@ -47,6 +41,19 @@ public class SpaceController {
 
     @Resource
     private SpaceService spaceService;
+
+    /**
+     * 添加空间
+     */
+    @PostMapping("/add")
+    public BaseResponse<Long> addSpace(@RequestBody SpaceAddRequest spaceAddRequest, HttpServletRequest request) {
+        if (spaceAddRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        long nweSpaceId = spaceService.addSpace(spaceAddRequest, loginUser);
+        return ResultUtils.success(nweSpaceId);
+    }
 
     /**
      * 删除空间

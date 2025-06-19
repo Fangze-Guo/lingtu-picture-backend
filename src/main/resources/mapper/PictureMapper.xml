@@ -6,6 +6,7 @@
 
     <resultMap id="BaseResultMap" type="com.fetters.picture.model.entity.Picture">
         <id property="id" column="id"/>
+        <id property="spaceId" column="spaceId"/>
         <result property="url" column="url"/>
         <result property="thumbnailUrl" column="thumbnailUrl"/>
         <result property="downloadUrl" column="downloadUrl"/>
@@ -30,8 +31,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id
-        ,url,thumbnailUrl,downloadUrl,name,introduction,category,tags,
+        id,spaceId,url,thumbnailUrl,downloadUrl,name,introduction,category,tags,
         picSize,picWidth,picHeight,picScale,picFormat,
         userId,createTime,editTime,updateTime,isDelete,
         reviewStatus,reviewMessage,reviewerId,reviewTime

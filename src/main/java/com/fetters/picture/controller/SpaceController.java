@@ -9,12 +9,10 @@ import com.fetters.picture.constant.UserConstant;
 import com.fetters.picture.exception.BusinessException;
 import com.fetters.picture.exception.ErrorCode;
 import com.fetters.picture.exception.ThrowUtils;
-import com.fetters.picture.model.dto.space.SpaceAddRequest;
-import com.fetters.picture.model.dto.space.SpaceEditRequest;
-import com.fetters.picture.model.dto.space.SpaceQueryRequest;
-import com.fetters.picture.model.dto.space.SpaceUpdateRequest;
+import com.fetters.picture.model.dto.space.*;
 import com.fetters.picture.model.entity.Space;
 import com.fetters.picture.model.entity.User;
+import com.fetters.picture.model.enums.SpaceLevelEnum;
 import com.fetters.picture.model.vo.SpaceVO;
 import com.fetters.picture.service.SpaceService;
 import com.fetters.picture.service.UserService;
@@ -24,7 +22,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author : Fetters
@@ -199,5 +200,20 @@ public class SpaceController {
         // 获取封装类
         Page<SpaceVO> spaceVOPage = spaceService.getSpaceVOPage(spacePage, request);
         return ResultUtils.success(spaceVOPage);
+    }
+
+    /**
+     * 获取空间级别列表，用于前端显示
+     */
+    @GetMapping("/list/level")
+    public BaseResponse<List<SpaceLevel>> listSpaceLevel() {
+        List<SpaceLevel> spaceLevelList = Arrays.stream(SpaceLevelEnum.values()) // 获取所有枚举
+                .map(spaceLevelEnum -> new SpaceLevel(
+                        spaceLevelEnum.getValue(),
+                        spaceLevelEnum.getText(),
+                        spaceLevelEnum.getMaxCount(),
+                        spaceLevelEnum.getMaxSize()))
+                .collect(Collectors.toList());
+        return ResultUtils.success(spaceLevelList);
     }
 }

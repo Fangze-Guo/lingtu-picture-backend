@@ -3,10 +3,7 @@ package com.fetters.picture.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.fetters.picture.model.dto.picture.PictureQueryRequest;
-import com.fetters.picture.model.dto.picture.PictureReviewRequest;
-import com.fetters.picture.model.dto.picture.PictureUploadByBatchRequest;
-import com.fetters.picture.model.dto.picture.PictureUploadRequest;
+import com.fetters.picture.model.dto.picture.*;
 import com.fetters.picture.model.entity.Picture;
 import com.fetters.picture.model.entity.User;
 import com.fetters.picture.model.vo.PictureVO;
@@ -48,10 +45,9 @@ public interface PictureService extends IService<Picture> {
     /**
      * 分页获取图片封装
      * @param picturePage 图片分页
-     * @param request     请求
      * @return 图片封装分页
      */
-    Page<PictureVO> getPictureVOPage(Page<Picture> picturePage, HttpServletRequest request);
+    Page<PictureVO> getPictureVOPage(Page<Picture> picturePage);
 
     /**
      * 校验图片
@@ -86,4 +82,33 @@ public interface PictureService extends IService<Picture> {
      * @param oldPicture 旧图片
      */
     void clearPictureFile(Picture oldPicture);
+
+    /**
+     * 检查图片权限
+     * @param loginUser 登录用户
+     * @param picture   图片
+     */
+    void checkPictureAuth(User loginUser, Picture picture);
+
+    /**
+     * 删除图片
+     * @param pictureId 删除的图片ID
+     * @param loginUser 登录用户
+     */
+    void deletePicture(long pictureId, User loginUser);
+
+    /**
+     * 编辑图片（用户使用）
+     * @param pictureEditRequest 图片编辑请求
+     * @param loginUser          登录用户
+     */
+    void editPicture(PictureEditRequest pictureEditRequest, User loginUser);
+
+    /**
+     * 获取图片列表（用户使用）
+     * @param pictureQueryRequest 图片查询请求
+     * @param loginUser           登录用户
+     * @return 图片列表
+     */
+    Page<PictureVO> listPictureVOByPage(PictureQueryRequest pictureQueryRequest, User loginUser);
 }

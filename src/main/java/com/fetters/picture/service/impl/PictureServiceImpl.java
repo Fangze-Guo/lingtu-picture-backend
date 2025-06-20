@@ -606,7 +606,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     }
 
     @Override
-    public Page<PictureVO> listPictureVOByPage(PictureQueryRequest pictureQueryRequest, User loginUser) {
+    public Page<PictureVO> listPictureVOByPage(PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
         long current = pictureQueryRequest.getCurrent();
         long size = pictureQueryRequest.getPageSize();
         // 限制爬虫
@@ -620,6 +620,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.REVIEW_PASS.getValue());
             pictureQueryRequest.setNullSpaceId(true);
         } else {
+            User loginUser = userService.getLoginUser(request);
             Space space = spaceService.getById(spaceId);
             ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
             if (!loginUser.getId().equals(space.getUserId())) {

@@ -16,7 +16,6 @@ import com.fetters.picture.model.entity.User;
 import com.fetters.picture.model.vo.PictureTagCategory;
 import com.fetters.picture.model.vo.PictureVO;
 import com.fetters.picture.service.PictureService;
-import com.fetters.picture.service.SpaceService;
 import com.fetters.picture.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -192,8 +191,7 @@ public class PictureController {
     public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest,
                                                              HttpServletRequest request) {
         ThrowUtils.throwIf(pictureQueryRequest == null, ErrorCode.PARAMS_ERROR);
-        User loginUser = userService.getLoginUser(request);
-        Page<PictureVO> pictureVOPage = pictureService.listPictureVOByPage(pictureQueryRequest, loginUser);
+        Page<PictureVO> pictureVOPage = pictureService.listPictureVOByPage(pictureQueryRequest, request);
         return ResultUtils.success(pictureVOPage);
     }
 

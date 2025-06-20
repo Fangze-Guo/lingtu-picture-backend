@@ -107,8 +107,8 @@ public interface PictureService extends IService<Picture> {
     /**
      * 获取图片列表（用户使用）
      * @param pictureQueryRequest 图片查询请求
-     * @param loginUser           登录用户
+     * @param request             请求
      * @return 图片列表
      */
-    Page<PictureVO> listPictureVOByPage(PictureQueryRequest pictureQueryRequest, User loginUser);
+    Page<PictureVO> listPictureVOByPage(PictureQueryRequest pictureQueryRequest, HttpServletRequest request);
 }

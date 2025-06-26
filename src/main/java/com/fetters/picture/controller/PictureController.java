@@ -53,6 +53,7 @@ public class PictureController {
             HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         PictureVO pictureVO = pictureService.uploadPicture(multipartFile, pictureUploadRequest, loginUser);
+        pictureService.clearAllCache();
         return ResultUtils.success(pictureVO);
     }
 
@@ -66,6 +67,7 @@ public class PictureController {
         String fileUrl = pictureUploadRequest.getFileUrl();
         User loginUser = userService.getLoginUser(request);
         PictureVO pictureVO = pictureService.uploadPicture(fileUrl, pictureUploadRequest, loginUser);
+        pictureService.clearAllCache();
         return ResultUtils.success(pictureVO);
     }
 
@@ -79,6 +81,7 @@ public class PictureController {
         }
         User loginUser = userService.getLoginUser(request);
         pictureService.deletePicture(deleteRequest.getId(), loginUser);
+        pictureService.clearAllCache();
         return ResultUtils.success(true);
     }
 
@@ -111,6 +114,9 @@ public class PictureController {
         // 操作数据库
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+
+        pictureService.clearAllCache();
+
         return ResultUtils.success(true);
     }
 
@@ -124,6 +130,7 @@ public class PictureController {
         }
         User loginUser = userService.getLoginUser(request);
         pictureService.editPicture(pictureEditRequest, loginUser);
+        pictureService.clearAllCache();
         return ResultUtils.success(true);
     }
 
@@ -233,6 +240,7 @@ public class PictureController {
         ThrowUtils.throwIf(pictureUploadByBatchRequest == null, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         int uploadCount = pictureService.uploadPictureByBatch(pictureUploadByBatchRequest, loginUser);
+        pictureService.clearAllCache();
         return ResultUtils.success(uploadCount);
     }
 }

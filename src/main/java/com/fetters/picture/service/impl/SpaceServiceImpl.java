@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fetters.picture.common.DeleteRequest;
 import com.fetters.picture.exception.BusinessException;
 import com.fetters.picture.exception.ErrorCode;
 import com.fetters.picture.exception.ThrowUtils;
@@ -15,11 +16,13 @@ import com.fetters.picture.model.dto.space.SpaceQueryRequest;
 import com.fetters.picture.model.entity.Space;
 import com.fetters.picture.model.entity.User;
 import com.fetters.picture.model.enums.SpaceLevelEnum;
+import com.fetters.picture.model.event.SpaceDeletedEvent;
 import com.fetters.picture.model.vo.SpaceVO;
 import com.fetters.picture.model.vo.UserVO;
 import com.fetters.picture.service.SpaceService;
 import com.fetters.picture.service.UserService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -45,6 +48,9 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     @Resource
     private TransactionTemplate transactionTemplate;
+
+    @Resource
+    private ApplicationEventPublisher eventPublisher;
 
     Map<Long, Object> userLockMap = new ConcurrentHashMap<>();
 
@@ -196,8 +202,21 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
             }
         }
     }
+
+    @Override
+    public void deleteSpaceAndPictures(DeleteRequest deleteRequest, User loginUser) {
+        long id = deleteRequest.getId();
+        // 判断是否存在
+        Space oldSpace = this.getById(id);
+        ThrowUtils.throwIf(oldSpace == null, ErrorCode.NOT_FOUND_ERROR);
+        // 仅本人或管理员可删除
+        if (!oldSpace.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        // 发布事件删除对应图片
+        eventPublisher.publishEvent(new SpaceDeletedEvent(id, loginUser));
+        // 删除空间
+        boolean result = this.removeById(id);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+    }
 }
-
-
-
-

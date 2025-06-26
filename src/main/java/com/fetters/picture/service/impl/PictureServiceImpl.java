@@ -9,7 +9,6 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.fetters.picture.common.ResultUtils;
 import com.fetters.picture.exception.BusinessException;
 import com.fetters.picture.exception.ErrorCode;
 import com.fetters.picture.exception.ThrowUtils;
@@ -226,7 +225,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             }
             return picture;
         });
-
         // 返回上传后的图片VO
         return PictureVO.objToVo(picture);
     }
@@ -408,11 +406,16 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
      */
     @Override
     public void fillReviewParams(Picture picture, User loginUser) {
-        // 管理员自动过审
+        // 管理员和私有空间自动过审
         if (userService.isAdmin(loginUser)) {
             picture.setReviewStatus(PictureReviewStatusEnum.REVIEW_PASS.getValue());
             picture.setReviewerId(loginUser.getId());
             picture.setReviewMessage("管理员自动过审");
+            picture.setReviewTime(new Date());
+        } else if (picture.getSpaceId() != null) {
+            picture.setReviewStatus(PictureReviewStatusEnum.REVIEW_PASS.getValue());
+            picture.setReviewerId(loginUser.getId());
+            picture.setReviewMessage("私有空间自动过审");
             picture.setReviewTime(new Date());
         } else {
             // 非管理员待审核
@@ -487,7 +490,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     }
 
     /**
-     * 清理图片文件
+     * 清理 COS 上图片文件
      * @param oldPicture 旧图片
      */
     @Async
@@ -522,14 +525,15 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     public void checkPictureAuth(User loginUser, Picture picture) {
         Long spaceId = picture.getSpaceId();
         Long loginUserId = loginUser.getId();
+        Space space = spaceService.getById(spaceId);
         if (spaceId == null) {
             // 公共图库，仅本人或管理员可操作
             if (!loginUserId.equals(picture.getUserId()) && !userService.isAdmin(loginUser)) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
             }
         } else {
-            // 私有空间，仅该空间管理员可操作
-            if (!loginUserId.equals(picture.getUserId())) {
+            // 私有空间，仅该空间创建人和管理员可操作
+            if (!loginUserId.equals(space.getUserId()) && !userService.isAdmin(loginUser)) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
             }
         }
@@ -563,20 +567,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
         // 清理COS存储
         this.clearPictureFile(oldPicture);
-
-        // 清理本地缓存（如果有命中）
-        String cacheKeyPattern = "picture:listPictureVOByPage:*";
-        LOCAL_CACHE.asMap().keySet().stream()
-                .filter(key -> key.startsWith("picture:listPictureVOByPage:"))
-                .forEach(LOCAL_CACHE::invalidate);
-
-        // 清理 Redis 缓存（使用 SCAN 避免阻塞）
-        ScanOptions options = ScanOptions.scanOptions().match(cacheKeyPattern).build();
-        Cursor<byte[]> cursor = stringRedisTemplate.getConnectionFactory().getConnection().scan(options);
-        while (cursor.hasNext()) {
-            byte[] keyBytes = cursor.next();
-            stringRedisTemplate.delete(new String(keyBytes));
-        }
     }
 
     @Override
@@ -598,8 +588,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         picture.setEditTime(new Date());
         // 数据校验
         this.validPicture(picture);
-        // 填充审核参数
-        this.fillReviewParams(picture, loginUser);
+        // 公共图库中的图片填充审核参数
+        if (oldPicture.getSpaceId() == null) {
+            this.fillReviewParams(picture, loginUser);
+        }
         // 操作数据库
         boolean result = this.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
@@ -661,5 +653,32 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 更新本地缓存
         LOCAL_CACHE.put(cacheKey, cacheValue);
         return pictureVOPage;
+    }
+
+    @Override
+    public void deletePicturesBySpaceId(Long spaceId, User loginUser) {
+        QueryWrapper<Picture> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("spaceId", spaceId);
+        List<Picture> pictureList = this.list(queryWrapper);
+        for (Picture picture : pictureList) {
+            this.deletePicture(picture.getId(), loginUser);
+        }
+    }
+
+    @Override
+    public void clearAllCache() {
+        // 清理本地缓存（如果有命中）
+        String cacheKeyPattern = "picture:listPictureVOByPage:*";
+        LOCAL_CACHE.asMap().keySet().stream()
+                .filter(key -> key.startsWith("picture:listPictureVOByPage:"))
+                .forEach(LOCAL_CACHE::invalidate);
+
+        // 清理 Redis 缓存（使用 SCAN 避免阻塞）
+        ScanOptions options = ScanOptions.scanOptions().match(cacheKeyPattern).build();
+        Cursor<byte[]> cursor = stringRedisTemplate.getConnectionFactory().getConnection().scan(options);
+        while (cursor.hasNext()) {
+            byte[] keyBytes = cursor.next();
+            stringRedisTemplate.delete(new String(keyBytes));
+        }
     }
 }

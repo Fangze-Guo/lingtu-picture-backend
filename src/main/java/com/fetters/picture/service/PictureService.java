@@ -111,4 +111,16 @@ public interface PictureService extends IService<Picture> {
      * @return 图片列表
      */
     Page<PictureVO> listPictureVOByPage(PictureQueryRequest pictureQueryRequest, HttpServletRequest request);
+
+    /**
+     * 删除空间下图片（删除空间事件调用）
+     * @param spaceId   空间ID
+     * @param loginUser 登录用户
+     */
+    void deletePicturesBySpaceId(Long spaceId, User loginUser);
+
+    /**
+     * 清空所有缓存
+     */
+    void clearAllCache();
 }

@@ -3,6 +3,7 @@ package com.fetters.picture.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.fetters.picture.common.DeleteRequest;
 import com.fetters.picture.model.dto.space.SpaceAddRequest;
 import com.fetters.picture.model.dto.space.SpaceQueryRequest;
 import com.fetters.picture.model.entity.Space;
@@ -21,7 +22,7 @@ public interface SpaceService extends IService<Space> {
     /**
      * 添加空间
      * @param spaceAddRequest 添加空间请求
-     * @param loginUser 登录用户
+     * @param loginUser       登录用户
      * @return 添加的空间ID
      */
     long addSpace(SpaceAddRequest spaceAddRequest, User loginUser);
@@ -61,4 +62,11 @@ public interface SpaceService extends IService<Space> {
      * @param space 空间
      */
     void fillSpaceBySpaceLevel(Space space);
+
+    /**
+     * 删除空间和图片
+     * @param deleteRequest 删除请求
+     * @param loginUser     登录用户
+     */
+    void deleteSpaceAndPictures(DeleteRequest deleteRequest, User loginUser);
 }

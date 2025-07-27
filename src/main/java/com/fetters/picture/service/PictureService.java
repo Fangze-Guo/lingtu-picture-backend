@@ -9,6 +9,7 @@ import com.fetters.picture.model.entity.User;
 import com.fetters.picture.model.vo.PictureVO;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * @author 99716
@@ -123,4 +124,13 @@ public interface PictureService extends IService<Picture> {
      * 清空所有缓存
      */
     void clearAllCache();
+
+    /**
+     * 根据图片颜色搜索图片
+     * @param spaceId   空间ID
+     * @param picColor  图片颜色
+     * @param loginUser 登录用户
+     * @return 图片列表
+     */
+    List<PictureVO> searchPictureByColor(Long spaceId, String picColor, User loginUser);
 }

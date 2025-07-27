@@ -72,7 +72,7 @@ public abstract class PictureUploadTemplate {
                     thumbnailCiObject = objectList.get(1);
                 }
                 // 封装压缩图的返回结果
-                return buildResult(originalFilename, uploadPath, compressedCiObject, thumbnailCiObject);
+                return buildResult(originalFilename, uploadPath, compressedCiObject, thumbnailCiObject, imageInfo);
             }
             return buildResult(originalFilename, file, uploadPath, imageInfo);
         } catch (Exception e) {
@@ -82,7 +82,6 @@ public abstract class PictureUploadTemplate {
             // 6. 临时文件清理
             this.deleteTempFile(file);
         }
-
     }
 
     /**
@@ -106,10 +105,12 @@ public abstract class PictureUploadTemplate {
      * @param uploadPath         上传地址
      * @param compressedCiObject 压缩后的对象
      * @param thumbnailCiObject  缩略图对象
+     * @param imageInfo          对象存储返回的图片信息
      * @return
      */
     private UploadPictureResult buildResult(String originalFilename, String uploadPath,
-                                            CIObject compressedCiObject, CIObject thumbnailCiObject) {
+                                            CIObject compressedCiObject, CIObject thumbnailCiObject,
+                                            ImageInfo imageInfo) {
         // 计算宽高
         int picWidth = compressedCiObject.getWidth();
         int picHeight = compressedCiObject.getHeight();
@@ -124,6 +125,7 @@ public abstract class PictureUploadTemplate {
         uploadPictureResult.setPicHeight(picHeight);
         uploadPictureResult.setPicScale(picScale);
         uploadPictureResult.setPicFormat(compressedCiObject.getFormat());
+        uploadPictureResult.setPicColor(imageInfo.getAve());
         // 设置缩略图地址
         uploadPictureResult.setThumbnailUrl(cosClientConfig.getHost() + "/" + thumbnailCiObject.getKey());
         // 设置下载图地址
@@ -155,6 +157,7 @@ public abstract class PictureUploadTemplate {
         uploadPictureResult.setPicHeight(picHeight);
         uploadPictureResult.setPicScale(picScale);
         uploadPictureResult.setPicFormat(imageInfo.getFormat());
+        uploadPictureResult.setPicColor(imageInfo.getAve());
         // 返回可访问的地址
         return uploadPictureResult;
     }

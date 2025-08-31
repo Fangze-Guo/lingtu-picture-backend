@@ -275,4 +275,20 @@ public class PictureController {
         List<PictureVO> result = pictureService.searchPictureByColor(spaceId, picColor, loginUser);
         return ResultUtils.success(result);
     }
+
+    /**
+     * 批量编辑图片
+     * @param pictureEditByBatchRequest 批量编辑图片请求
+     * @param request                   请求
+     * @return 是否成功
+     */
+    @PostMapping("/edit/batch")
+    public BaseResponse<Boolean> editPictureByBatch(@RequestBody PictureEditByBatchRequest pictureEditByBatchRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureEditByBatchRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        pictureService.editPictureByBatch(pictureEditByBatchRequest, loginUser);
+        pictureService.clearAllCache();
+        return ResultUtils.success(true);
+    }
+
 }

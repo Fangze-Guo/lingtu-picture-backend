@@ -17,8 +17,8 @@ import com.fetters.picture.model.entity.Space;
 import com.fetters.picture.model.entity.User;
 import com.fetters.picture.model.enums.SpaceLevelEnum;
 import com.fetters.picture.model.event.SpaceDeletedEvent;
-import com.fetters.picture.model.vo.SpaceVO;
 import com.fetters.picture.model.vo.UserVO;
+import com.fetters.picture.model.vo.space.SpaceVO;
 import com.fetters.picture.service.SpaceService;
 import com.fetters.picture.service.UserService;
 import org.springframework.beans.BeanUtils;
@@ -219,4 +219,18 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         boolean result = this.removeById(id);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
     }
+
+    /**
+     * 空间权限校验
+     * @param loginUser
+     * @param space
+     */
+    @Override
+    public void checkSpaceAuth(User loginUser, Space space) {
+        // 仅本人或管理员可访问
+        if (!space.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+    }
+
 }

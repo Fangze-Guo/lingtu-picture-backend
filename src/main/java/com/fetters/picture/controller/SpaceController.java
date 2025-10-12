@@ -13,7 +13,7 @@ import com.fetters.picture.model.dto.space.*;
 import com.fetters.picture.model.entity.Space;
 import com.fetters.picture.model.entity.User;
 import com.fetters.picture.model.enums.SpaceLevelEnum;
-import com.fetters.picture.model.vo.SpaceVO;
+import com.fetters.picture.model.vo.space.SpaceVO;
 import com.fetters.picture.service.SpaceService;
 import com.fetters.picture.service.UserService;
 import lombok.extern.slf4j.Slf4j;

@@ -1,6 +1,7 @@
-package com.fetters.picture.model.vo;
+package com.fetters.picture.model.vo.space;
 
 import com.fetters.picture.model.entity.Space;
+import com.fetters.picture.model.vo.UserVO;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;
 

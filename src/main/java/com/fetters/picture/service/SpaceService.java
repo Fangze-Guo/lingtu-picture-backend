@@ -8,7 +8,7 @@ import com.fetters.picture.model.dto.space.SpaceAddRequest;
 import com.fetters.picture.model.dto.space.SpaceQueryRequest;
 import com.fetters.picture.model.entity.Space;
 import com.fetters.picture.model.entity.User;
-import com.fetters.picture.model.vo.SpaceVO;
+import com.fetters.picture.model.vo.space.SpaceVO;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -69,4 +69,11 @@ public interface SpaceService extends IService<Space> {
      * @param loginUser     登录用户
      */
     void deleteSpaceAndPictures(DeleteRequest deleteRequest, User loginUser);
+
+    /**
+     * 空间权限校验
+     * @param loginUser 登录用户
+     * @param space     空间
+     */
+    void checkSpaceAuth(User loginUser, Space space);
 }

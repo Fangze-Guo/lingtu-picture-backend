@@ -10,6 +10,8 @@ server:
 spring:
   application:
     name: lingtu-picture-backend
+  profiles:
+    active: local  # 激活 application-local.yml 配置文件
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/lingtu_picture

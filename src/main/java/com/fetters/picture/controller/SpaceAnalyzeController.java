@@ -4,13 +4,10 @@ import com.fetters.picture.common.BaseResponse;
 import com.fetters.picture.common.ResultUtils;
 import com.fetters.picture.exception.ErrorCode;
 import com.fetters.picture.exception.ThrowUtils;
-import com.fetters.picture.model.dto.space.analyze.SpaceCategoryAnalyzeRequest;
-import com.fetters.picture.model.dto.space.analyze.SpaceTagAnalyzeRequest;
-import com.fetters.picture.model.dto.space.analyze.SpaceUsageAnalyzeRequest;
+import com.fetters.picture.model.dto.space.analyze.*;
+import com.fetters.picture.model.entity.Space;
 import com.fetters.picture.model.entity.User;
-import com.fetters.picture.model.vo.space.analyze.SpaceCategoryAnalyzeResponse;
-import com.fetters.picture.model.vo.space.analyze.SpaceTagAnalyzeResponse;
-import com.fetters.picture.model.vo.space.analyze.SpaceUsageAnalyzeResponse;
+import com.fetters.picture.model.vo.space.analyze.*;
 import com.fetters.picture.service.SpaceAnalyzeService;
 import com.fetters.picture.service.UserService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,7 +50,9 @@ public class SpaceAnalyzeController {
      * 获取空间图片分类分析数据接口
      */
     @PostMapping("/category")
-    public BaseResponse<List<SpaceCategoryAnalyzeResponse>> getSpaceCategoryAnalyze(@RequestBody SpaceCategoryAnalyzeRequest spaceCategoryAnalyzeRequest, HttpServletRequest request) {
+    public BaseResponse<List<SpaceCategoryAnalyzeResponse>> getSpaceCategoryAnalyze(
+            @RequestBody SpaceCategoryAnalyzeRequest spaceCategoryAnalyzeRequest,
+            HttpServletRequest request) {
         ThrowUtils.throwIf(spaceCategoryAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         List<SpaceCategoryAnalyzeResponse> resultList = spaceAnalyzeService.getSpaceCategoryAnalyze(spaceCategoryAnalyzeRequest, loginUser);
@@ -64,11 +63,49 @@ public class SpaceAnalyzeController {
      * 获取空间图片标签分析数据接口
      */
     @PostMapping("/tag")
-    public BaseResponse<List<SpaceTagAnalyzeResponse>> getSpaceTagAnalyze(@RequestBody SpaceTagAnalyzeRequest spaceTagAnalyzeRequest, HttpServletRequest request) {
+    public BaseResponse<List<SpaceTagAnalyzeResponse>> getSpaceTagAnalyze(
+            @RequestBody SpaceTagAnalyzeRequest spaceTagAnalyzeRequest,
+            HttpServletRequest request) {
         ThrowUtils.throwIf(spaceTagAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         List<SpaceTagAnalyzeResponse> resultList = spaceAnalyzeService.getSpaceTagAnalyze(spaceTagAnalyzeRequest, loginUser);
         return ResultUtils.success(resultList);
     }
-}
 
+    /**
+     * 获取空间图片大小分析数据接口
+     */
+    @PostMapping("/size")
+    public BaseResponse<List<SpaceSizeAnalyzeResponse>> getSpaceSizeAnalyze(
+            @RequestBody SpaceSizeAnalyzeRequest spaceSizeAnalyzeRequest,
+            HttpServletRequest request) {
+        ThrowUtils.throwIf(spaceSizeAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        List<SpaceSizeAnalyzeResponse> resultList = spaceAnalyzeService.getSpaceSizeAnalyze(spaceSizeAnalyzeRequest, loginUser);
+        return ResultUtils.success(resultList);
+    }
+
+    /**
+     * 获取空间用户上传行为分析数据接口
+     */
+    @PostMapping("/user")
+    public BaseResponse<List<SpaceUserAnalyzeResponse>> getSpaceUserAnalyze(
+            @RequestBody SpaceUserAnalyzeRequest spaceUserAnalyzeRequest,
+            HttpServletRequest request) {
+        ThrowUtils.throwIf(spaceUserAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        List<SpaceUserAnalyzeResponse> resultList = spaceAnalyzeService.getSpaceUserAnalyze(spaceUserAnalyzeRequest, loginUser);
+        return ResultUtils.success(resultList);
+    }
+
+    /**
+     * 获取空间使用排行 top 的空间接口（管理员）
+     */
+    @PostMapping("/rank")
+    public BaseResponse<List<Space>> getSpaceRankAnalyze(@RequestBody SpaceRankAnalyzeRequest spaceRankAnalyzeRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(spaceRankAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        List<Space> resultList = spaceAnalyzeService.getSpaceRankAnalyze(spaceRankAnalyzeRequest, loginUser);
+        return ResultUtils.success(resultList);
+    }
+}

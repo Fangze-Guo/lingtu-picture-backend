@@ -1,12 +1,9 @@
 package com.fetters.picture.service;
 
-import com.fetters.picture.model.dto.space.analyze.SpaceCategoryAnalyzeRequest;
-import com.fetters.picture.model.dto.space.analyze.SpaceTagAnalyzeRequest;
-import com.fetters.picture.model.dto.space.analyze.SpaceUsageAnalyzeRequest;
+import com.fetters.picture.model.dto.space.analyze.*;
+import com.fetters.picture.model.entity.Space;
 import com.fetters.picture.model.entity.User;
-import com.fetters.picture.model.vo.space.analyze.SpaceCategoryAnalyzeResponse;
-import com.fetters.picture.model.vo.space.analyze.SpaceTagAnalyzeResponse;
-import com.fetters.picture.model.vo.space.analyze.SpaceUsageAnalyzeResponse;
+import com.fetters.picture.model.vo.space.analyze.*;
 
 import java.util.List;
 
@@ -40,4 +37,28 @@ public interface SpaceAnalyzeService {
      * @return List<SpaceTagAnalyzeResponse> 空间图片标签分析结果响应列表
      */
     List<SpaceTagAnalyzeResponse> getSpaceTagAnalyze(SpaceTagAnalyzeRequest spaceTagAnalyzeRequest, User loginUser);
+
+    /**
+     * 获取空间图片大小分析数据
+     * @param spaceSizeAnalyzeRequest 空间图片大小分析请求参数
+     * @param loginUser               当前登录用户
+     * @return List<SpaceSizeAnalyzeResponse> 空间图片大小分析结果响应列表
+     */
+    List<SpaceSizeAnalyzeResponse> getSpaceSizeAnalyze(SpaceSizeAnalyzeRequest spaceSizeAnalyzeRequest, User loginUser);
+
+    /**
+     * 获取空间用户上传行为分析数据
+     * @param spaceUserAnalyzeRequest 空间用户上传行为分析请求参数
+     * @param loginUser               当前登录用户
+     * @return List<SpaceUserAnalyzeResponse> 空间用户上传行为分析结果响应列表
+     */
+    List<SpaceUserAnalyzeResponse> getSpaceUserAnalyze(SpaceUserAnalyzeRequest spaceUserAnalyzeRequest, User loginUser);
+
+    /**
+     * 获取空间使用排行数据（管理员）
+     * @param spaceRankAnalyzeRequest 空间使用排行数据请求参数
+     * @param loginUser               当前登录用户
+     * @return List<Space> 空间列表
+     */
+    List<Space> getSpaceRankAnalyze(SpaceRankAnalyzeRequest spaceRankAnalyzeRequest, User loginUser);
 }

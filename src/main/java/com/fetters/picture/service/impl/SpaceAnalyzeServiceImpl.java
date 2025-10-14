@@ -7,22 +7,19 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.fetters.picture.exception.BusinessException;
 import com.fetters.picture.exception.ErrorCode;
 import com.fetters.picture.exception.ThrowUtils;
-import com.fetters.picture.model.dto.space.analyze.SpaceAnalyzeRequest;
-import com.fetters.picture.model.dto.space.analyze.SpaceCategoryAnalyzeRequest;
-import com.fetters.picture.model.dto.space.analyze.SpaceTagAnalyzeRequest;
-import com.fetters.picture.model.dto.space.analyze.SpaceUsageAnalyzeRequest;
+import com.fetters.picture.model.dto.space.analyze.*;
 import com.fetters.picture.model.entity.Picture;
 import com.fetters.picture.model.entity.Space;
 import com.fetters.picture.model.entity.User;
-import com.fetters.picture.model.vo.space.analyze.SpaceCategoryAnalyzeResponse;
-import com.fetters.picture.model.vo.space.analyze.SpaceTagAnalyzeResponse;
-import com.fetters.picture.model.vo.space.analyze.SpaceUsageAnalyzeResponse;
+import com.fetters.picture.model.vo.space.analyze.*;
 import com.fetters.picture.service.PictureService;
 import com.fetters.picture.service.SpaceAnalyzeService;
 import com.fetters.picture.service.SpaceService;
 import com.fetters.picture.service.UserService;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,6 +29,7 @@ import java.util.stream.Collectors;
  * @description : 空间图片分析服务实现类
  * @createDate : 2025/10/12 19:33
  */
+@Service
 public class SpaceAnalyzeServiceImpl implements SpaceAnalyzeService {
 
     @Resource
@@ -173,6 +171,114 @@ public class SpaceAnalyzeServiceImpl implements SpaceAnalyzeService {
                 .sorted((e1, e2) -> Long.compare(e2.getValue(), e1.getValue())) // 降序排列
                 .map(entry -> new SpaceTagAnalyzeResponse(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 获取空间图片大小分析数据
+     * @param spaceSizeAnalyzeRequest 空间图片大小分析请求参数
+     * @param loginUser               当前登录用户
+     * @return List<SpaceSizeAnalyzeResponse> 空间图片大小分析结果响应列表
+     */
+    @Override
+    public List<SpaceSizeAnalyzeResponse> getSpaceSizeAnalyze(SpaceSizeAnalyzeRequest spaceSizeAnalyzeRequest, User loginUser) {
+        ThrowUtils.throwIf(spaceSizeAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+
+        // 检查权限
+        checkSpaceAnalyzeAuth(spaceSizeAnalyzeRequest, loginUser);
+
+        // 构造查询条件
+        QueryWrapper<Picture> queryWrapper = new QueryWrapper<>();
+        fillAnalyzeQueryWrapper(spaceSizeAnalyzeRequest, queryWrapper);
+
+        // 查询符合条件的图片大小
+        queryWrapper.select("picSize");
+        List<Long> picSizeList = pictureService.getBaseMapper().selectObjs(queryWrapper)
+                .stream()
+                .map(size -> ((Number) size).longValue())
+                .collect(Collectors.toList());
+
+        // 定义分段范围，注意使用有序 Map
+        Map<String, Long> sizeRanges = new LinkedHashMap<>();
+        sizeRanges.put("<100KB", picSizeList.stream().filter(size -> size < 100 * 1024).count());
+        sizeRanges.put("100KB-500KB", picSizeList.stream().filter(size -> size >= 100 * 1024 && size < 500 * 1024).count());
+        sizeRanges.put("500KB-1MB", picSizeList.stream().filter(size -> size >= 500 * 1024 && size < 1 * 1024 * 1024).count());
+        sizeRanges.put(">1MB", picSizeList.stream().filter(size -> size >= 1 * 1024 * 1024).count());
+
+        return sizeRanges.entrySet().stream()
+                .map(entry -> new SpaceSizeAnalyzeResponse(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 获取空间用户上传行为分析数据
+     * @param spaceUserAnalyzeRequest 空间用户上传行为分析请求参数
+     * @param loginUser               当前登录用户
+     * @return List<SpaceUserAnalyzeResponse> 空间用户上传行为分析结果响应列表
+     */
+    @Override
+    public List<SpaceUserAnalyzeResponse> getSpaceUserAnalyze(SpaceUserAnalyzeRequest spaceUserAnalyzeRequest, User loginUser) {
+        ThrowUtils.throwIf(spaceUserAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+
+        // 检查权限
+        checkSpaceAnalyzeAuth(spaceUserAnalyzeRequest, loginUser);
+
+        // 构造查询条件
+        QueryWrapper<Picture> queryWrapper = new QueryWrapper<>();
+        Long userId = spaceUserAnalyzeRequest.getUserId();
+        queryWrapper.eq(ObjUtil.isNotNull(userId), "userId", userId);
+        fillAnalyzeQueryWrapper(spaceUserAnalyzeRequest, queryWrapper);
+
+        // 分析维度：每日、每周、每月
+        String timeDimension = spaceUserAnalyzeRequest.getTimeDimension();
+        switch (timeDimension) {
+            case "day":
+                queryWrapper.select("DATE_FORMAT(createTime, '%Y-%m-%d') AS period", "COUNT(*) AS count");
+                break;
+            case "week":
+                queryWrapper.select("YEARWEEK(createTime) AS period", "COUNT(*) AS count");
+                break;
+            case "month":
+                queryWrapper.select("DATE_FORMAT(createTime, '%Y-%m') AS period", "COUNT(*) AS count");
+                break;
+            default:
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的时间维度");
+        }
+
+        // 分组和排序
+        queryWrapper.groupBy("period").orderByAsc("period");
+
+        // 查询结果并转换
+        List<Map<String, Object>> queryResult = pictureService.getBaseMapper().selectMaps(queryWrapper);
+        return queryResult.stream()
+                .map(result -> {
+                    String period = result.get("period").toString();
+                    Long count = ((Number) result.get("count")).longValue();
+                    return new SpaceUserAnalyzeResponse(period, count);
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 获取空间使用排行数据（管理员）
+     * @param spaceRankAnalyzeRequest 空间使用排行数据请求参数
+     * @param loginUser               当前登录用户
+     * @return List<Space> 空间列表
+     */
+    @Override
+    public List<Space> getSpaceRankAnalyze(SpaceRankAnalyzeRequest spaceRankAnalyzeRequest, User loginUser) {
+        ThrowUtils.throwIf(spaceRankAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+
+        // 仅管理员可查看空间排行
+        ThrowUtils.throwIf(!userService.isAdmin(loginUser), ErrorCode.NO_AUTH_ERROR, "无权查看空间排行");
+
+        // 构造查询条件
+        QueryWrapper<Space> queryWrapper = new QueryWrapper<>();
+        queryWrapper.select("id", "spaceName", "userId", "totalSize")
+                .orderByDesc("totalSize")
+                .last("LIMIT " + spaceRankAnalyzeRequest.getTopN()); // 取前 N 名
+
+        // 查询结果
+        return spaceService.list(queryWrapper);
     }
 
     /**

@@ -14,13 +14,16 @@ import com.fetters.picture.mapper.SpaceMapper;
 import com.fetters.picture.model.dto.space.SpaceAddRequest;
 import com.fetters.picture.model.dto.space.SpaceQueryRequest;
 import com.fetters.picture.model.entity.Space;
+import com.fetters.picture.model.entity.SpaceUser;
 import com.fetters.picture.model.entity.User;
 import com.fetters.picture.model.enums.SpaceLevelEnum;
+import com.fetters.picture.model.enums.SpaceRoleEnum;
 import com.fetters.picture.model.enums.SpaceTypeEnum;
 import com.fetters.picture.model.event.SpaceDeletedEvent;
 import com.fetters.picture.model.vo.UserVO;
 import com.fetters.picture.model.vo.space.SpaceVO;
 import com.fetters.picture.service.SpaceService;
+import com.fetters.picture.service.SpaceUserService;
 import com.fetters.picture.service.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
@@ -46,6 +49,9 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private SpaceUserService spaceUserService;
 
     @Resource
     private TransactionTemplate transactionTemplate;
@@ -91,10 +97,20 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                 if (exists) {
                     throw new BusinessException(ErrorCode.OPERATION_ERROR, "每个用户仅能有一个私有空间");
                 }
-                boolean save = this.save(space);
-                if (!save) {
+                boolean result = this.save(space);
+                if (!result) {
                     throw new BusinessException(ErrorCode.OPERATION_ERROR, "创建空间失败");
                 }
+                // 如果是团队空间，关联新增团队成员记录
+                if (SpaceTypeEnum.TEAM.getValue() == spaceAddRequest.getSpaceType()) {
+                    SpaceUser spaceUser = new SpaceUser();
+                    spaceUser.setSpaceId(space.getId());
+                    spaceUser.setUserId(userId);
+                    spaceUser.setSpaceRole(SpaceRoleEnum.ADMIN.getValue());
+                    result = spaceUserService.save(spaceUser);
+                    ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "创建团队成员记录失败");
+                }
+                // 返回新写入的数据 id
                 return space.getId();
             });
             return newSpaceId;

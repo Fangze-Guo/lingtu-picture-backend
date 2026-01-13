@@ -27,6 +27,7 @@ import com.fetters.picture.service.SpaceUserService;
 import com.fetters.picture.service.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -51,6 +52,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
     private UserService userService;
 
     @Resource
+    @Lazy
     private SpaceUserService spaceUserService;
 
     @Resource

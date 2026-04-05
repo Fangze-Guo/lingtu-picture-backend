@@ -16,8 +16,6 @@ import com.fetters.picture.constant.UserConstant;
 import com.fetters.picture.exception.BusinessException;
 import com.fetters.picture.exception.ErrorCode;
 import com.fetters.picture.exception.ThrowUtils;
-import com.fetters.picture.manager.auth.annotation.SaSpaceCheckPermission;
-import com.fetters.picture.manager.auth.model.SpaceUserPermissionConstant;
 import com.fetters.picture.model.dto.picture.*;
 import com.fetters.picture.model.entity.Picture;
 import com.fetters.picture.model.entity.User;
@@ -58,7 +56,6 @@ public class PictureController {
      * 上传图片（可重新上传）
      */
     @PostMapping("/upload")
-    @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.PICTURE_UPLOAD)
     public BaseResponse<PictureVO> uploadPicture(
             @RequestPart("file") MultipartFile multipartFile,
             PictureUploadRequest pictureUploadRequest,
@@ -73,7 +70,7 @@ public class PictureController {
      * 上传图片（可重新上传）
      */
     @PostMapping("/upload/url")
-    @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.PICTURE_UPLOAD)
+
     public BaseResponse<PictureVO> uploadPictureByUrl(
             @RequestBody PictureUploadRequest pictureUploadRequest,
             HttpServletRequest request) {
@@ -88,7 +85,7 @@ public class PictureController {
      * 删除图片
      */
     @PostMapping("/delete")
-    @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.PICTURE_DELETE)
+
     public BaseResponse<Boolean> deletePicture(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -138,7 +135,7 @@ public class PictureController {
      * 编辑图片（用户使用）
      */
     @PostMapping("/edit")
-    @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.PICTURE_EDIT)
+
     public BaseResponse<Boolean> editPicture(@RequestBody PictureEditRequest pictureEditRequest, HttpServletRequest request) {
         if (pictureEditRequest == null || pictureEditRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -280,7 +277,7 @@ public class PictureController {
      * @return 颜色搜图结果
      */
     @PostMapping("/search/color")
-    @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.PICTURE_VIEW)
+
     public BaseResponse<List<PictureVO>> searchPictureByColor(@RequestBody SearchPictureByColorRequest searchPictureByColorRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(searchPictureByColorRequest == null, ErrorCode.PARAMS_ERROR);
         String picColor = searchPictureByColorRequest.getPicColor();
@@ -297,7 +294,7 @@ public class PictureController {
      * @return 是否成功
      */
     @PostMapping("/edit/batch")
-    @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.PICTURE_EDIT)
+
     public BaseResponse<Boolean> editPictureByBatch(@RequestBody PictureEditByBatchRequest pictureEditByBatchRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(pictureEditByBatchRequest == null, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
@@ -313,7 +310,7 @@ public class PictureController {
      * @return 创建扩图任务响应
      */
     @PostMapping("/out_painting/create_task")
-    @SaSpaceCheckPermission(value = SpaceUserPermissionConstant.PICTURE_EDIT)
+
     public BaseResponse<CreateOutPaintingTaskResponse> createPictureOutPaintingTask(@RequestBody CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest,
                                                                                     HttpServletRequest request) {
         if (createPictureOutPaintingTaskRequest == null || createPictureOutPaintingTaskRequest.getPictureId() == null) {
